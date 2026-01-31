@@ -2,12 +2,12 @@ from fastapi import APIRouter, Header, Request
 
 from app.core.redis_client import get_redis_client
 from app.rate_limiter.policies import POLICIES, DEFAULT_POLICY, RateLimitPolicy
-from app.rate_limiter.fixed_window import FixedWindowLimiter
+from app.rate_limiter.selector import LimiterSelector
 
 router = APIRouter()
 
 redis_client = get_redis_client()
-limiter = FixedWindowLimiter(redis_client)
+limiter = LimiterSelector(redis_client)
 
 
 def get_policy_for_path(path: str) -> RateLimitPolicy:
