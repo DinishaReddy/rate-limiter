@@ -1,25 +1,33 @@
+from fastapi import HTTPException
+
 from app.rate_limiter.fixed_window import FixedWindowLimiter
+from app.rate_limiter.sliding_window import SlidingWindowLimiter
+from app.rate_limiter.token_bucket import TokenBucketLimiter
+from app.rate_limiter.leaky_bucket import LeakyBucketLimiter
 from app.rate_limiter.policies import RateLimitPolicy
+from app.rate_limiter.Metrics import Metrics
 
 
 class LimiterSelector:
-    """
-    Chooses the correct limiter based on policy.algorithm
-    """
-
     def __init__(self, redis_client):
-        # We create the limiter objects once and reuse them
         self.limiters = {
-            "fixed_window": FixedWindowLimiter(redis_client)
+            "fixed_window": FixedWindowLimiter(redis_client),
+            "sliding_window": SlidingWindowLimiter(redis_client),
+            "token_bucket": TokenBucketLimiter(redis_client),
+            "leaky_bucket": LeakyBucketLimiter(redis_client),
         }
+        self.metrics = Metrics(redis_client)
 
     def check(self, user: str, endpoint: str, policy: RateLimitPolicy) -> None:
-        algo_name = policy.algorithm
-
-        limiter = self.limiters.get(algo_name)
-
+        limiter = self.limiters.get(policy.algorithm)
         if limiter is None:
-            # If someone sets algorithm to something we don't support yet
-            raise ValueError(f"Unsupported algorithm: {algo_name}")
+            raise ValueError(f"Unsupported algorithm: {policy.algorithm}")
 
-        limiter.check(user=user, endpoint=endpoint, policy=policy)
+        try:
+            limiter.check(user=user, endpoint=endpoint, policy=policy)
+            # ✅ request allowed
+            self.metrics.record_allowed(endpoint)
+        except HTTPException:
+            # ✅ request blocked (429 or 503)
+            self.metrics.record_blocked(endpoint)
+            raise

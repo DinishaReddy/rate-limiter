@@ -1,0 +1,377 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rate Limiter Playground</title>
+    <style>
+      :root{
+        --bg:#0b1020;
+        --card:#121a33;
+        --muted:#9aa7c7;
+        --text:#e9efff;
+        --border: rgba(255,255,255,.10);
+        --shadow: 0 10px 30px rgba(0,0,0,.35);
+        --good:#22c55e;
+        --bad:#ef4444;
+        --warn:#f59e0b;
+        --btn:#1e2a55;
+        --btnHover:#24336a;
+        --chip:#0f1730;
+      }
+      *{box-sizing:border-box}
+        body{
+        margin:0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;        /* vertical centering */
+        justify-content: center;    /* horizontal centering */
+
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        background: radial-gradient(1200px 600px at 10% 0%, rgba(80,120,255,.18), transparent 60%),
+                    radial-gradient(900px 500px at 90% 10%, rgba(34,197,94,.12), transparent 60%),
+                    var(--bg);
+        color:var(--text);
+        }
+        .wrap{
+        max-width: 980px;
+        width: 100%;
+        padding: 16px;
+        }
+
+      header{
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap:16px;
+        margin-bottom: 18px;
+      }
+      h1{
+        margin:0;
+        font-size: 34px;
+        letter-spacing: .3px;
+      }
+      .subtitle{
+        margin-top: 6px;
+        color:var(--muted);
+        font-size: 14px;
+      }
+      .pill{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding:8px 12px;
+        border:1px solid var(--border);
+        border-radius:999px;
+        background: rgba(255,255,255,.04);
+        color:var(--muted);
+        font-size: 13px;
+        white-space:nowrap;
+      }
+      .grid{
+        display:grid;
+        grid-template-columns: 1.2fr .8fr;
+        gap: 14px;
+      }
+      @media (max-width: 860px){
+        .grid{grid-template-columns:1fr}
+        header{flex-direction:column; align-items:flex-start}
+      }
+      .card{
+        background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 14px;
+      }
+      .card h2{
+        margin:0 0 10px;
+        font-size: 16px;
+        color: #cfe0ff;
+        letter-spacing:.2px;
+      }
+      .controls{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        align-items:center;
+      }
+      label{
+        font-size:13px;
+        color:var(--muted);
+      }
+      input{
+        width: 220px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.03);
+        color: var(--text);
+        outline:none;
+      }
+      input:focus{
+        border-color: rgba(120,160,255,.7);
+        box-shadow: 0 0 0 4px rgba(120,160,255,.15);
+      }
+      .btnRow{
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-top: 12px;
+      }
+      button{
+        border: 1px solid var(--border);
+        background: var(--btn);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: transform .04s ease, background .15s ease;
+      }
+      button:hover{ background: var(--btnHover); }
+      button:active{ transform: translateY(1px); }
+      .ghost{
+        background: transparent;
+      }
+      .small{
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+        line-height: 1.35;
+      }
+      .statusLine{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-top: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(255,255,255,.03);
+      }
+      .badge{
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        padding: 6px 10px;
+        border-radius:999px;
+        font-size: 12px;
+        border: 1px solid var(--border);
+        background: var(--chip);
+      }
+      .dot{
+        width:10px;height:10px;border-radius:50%;
+        background: var(--muted);
+      }
+      .dot.good{background: var(--good);}
+      .dot.bad{background: var(--bad);}
+      .dot.warn{background: var(--warn);}
+      .mono{
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      }
+      pre{
+        margin: 12px 0 0;
+        background: rgba(0,0,0,.25);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        overflow:auto;
+        min-height: 160px;
+      }
+      .metricsGrid{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+        margin-top: 10px;
+      }
+      .mini{
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.03);
+      }
+      .mini .k{color:var(--muted); font-size:12px;}
+      .mini .v{font-size:20px; margin-top:6px;}
+      .rightTop{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+      }
+      .toggle{
+        display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px;
+      }
+      .toggle input{width:auto}
+      a.link{color:#b8ccff; text-decoration:none}
+      a.link:hover{text-decoration:underline}
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Rate Limiter Playground</h1>
+          <div class="subtitle">
+            Test per-user limits & algorithms via buttons. Swagger is still available at <span class="mono">/docs</span>.
+          </div>
+        </div>
+        <div class="pill">
+          <span class="dot good"></span>
+          <span>Backend: <span class="mono">localhost</span></span>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- LEFT: Controls + Last response -->
+        <section class="card">
+          <h2>Send Requests</h2>
+
+          <div class="controls">
+            <label for="userId">User ID</label>
+            <input id="userId" value="alice" placeholder="e.g., alice" />
+            <button class="ghost" onclick="resetUI()">Clear output</button>
+          </div>
+
+          <div class="btnRow">
+            <button onclick="callApi('/login')">Call /login</button>
+            <button onclick="callApi('/data')">Call /data</button>
+            <button onclick="callApi('/analyze')">Call /analyze</button>
+          </div>
+
+          <div class="small">
+            Tip: change User ID to simulate multiple users. Rate limits are enforced per user + endpoint.
+          </div>
+
+          <div class="statusLine">
+            <div class="badge" id="badge">
+              <span class="dot" id="statusDot"></span>
+              <span id="statusText">Status: —</span>
+            </div>
+            <div class="mono" id="endpointText">Endpoint: —</div>
+          </div>
+
+          <pre id="output" class="mono">{}</pre>
+        </section>
+
+        <!-- RIGHT: Metrics -->
+        <section class="card">
+          <div class="rightTop">
+            <h2 style="margin:0;">Metrics</h2>
+            <div class="toggle">
+              <input type="checkbox" id="autoMetrics" />
+              <label for="autoMetrics">Auto refresh</label>
+            </div>
+          </div>
+
+          <div class="btnRow" style="margin-top:10px;">
+            <button onclick="loadMetrics()">Refresh /metrics</button>
+            <button class="ghost" onclick="resetMetricsView()">Clear metrics view</button>
+            <a class="link" href="/docs">Open /docs</a>
+          </div>
+
+          <div class="metricsGrid">
+            <div class="mini">
+              <div class="k">Allowed</div>
+              <div class="v" id="allowedCount">—</div>
+            </div>
+            <div class="mini">
+              <div class="k">Blocked</div>
+              <div class="v" id="blockedCount">—</div>
+            </div>
+          </div>
+
+          <pre id="metrics" class="mono">{}</pre>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      let metricsTimer = null;
+
+      function setStatus(statusCode) {
+        const dot = document.getElementById("statusDot");
+        const txt = document.getElementById("statusText");
+
+        txt.textContent = `Status: ${statusCode}`;
+
+        dot.classList.remove("good", "bad", "warn");
+        if (statusCode >= 200 && statusCode < 300) dot.classList.add("good");
+        else if (statusCode === 429) dot.classList.add("warn");
+        else if (statusCode >= 400) dot.classList.add("bad");
+      }
+
+      function pretty(obj) {
+        return JSON.stringify(obj, null, 2);
+      }
+
+      function resetUI() {
+        document.getElementById("endpointText").textContent = "Endpoint: —";
+        document.getElementById("output").textContent = "{}";
+        document.getElementById("statusText").textContent = "Status: —";
+        const dot = document.getElementById("statusDot");
+        dot.classList.remove("good", "bad", "warn");
+      }
+
+      function resetMetricsView() {
+        document.getElementById("allowedCount").textContent = "—";
+        document.getElementById("blockedCount").textContent = "—";
+        document.getElementById("metrics").textContent = "{}";
+      }
+
+      async function callApi(path) {
+        const userId = document.getElementById("userId").value || "anonymous";
+
+        document.getElementById("endpointText").textContent = `Endpoint: ${path}`;
+
+        const res = await fetch(path, {
+          method: "GET",
+          headers: { "X-User-Id": userId }
+        });
+
+        setStatus(res.status);
+
+        let data;
+        try { data = await res.json(); }
+        catch { data = { error: "Could not parse JSON response" }; }
+
+        document.getElementById("output").textContent = pretty(data);
+
+        // update metrics after every request so it feels “live”
+        loadMetrics();
+      }
+
+      async function loadMetrics() {
+        try {
+          const res = await fetch("/metrics");
+          const data = await res.json();
+
+          document.getElementById("metrics").textContent = pretty(data);
+
+          // Your /metrics currently returns allowed_requests + blocked_requests
+          // If you later add per-endpoint metrics, we can display them here too.
+          document.getElementById("allowedCount").textContent = data.allowed_requests ?? "—";
+          document.getElementById("blockedCount").textContent = data.blocked_requests ?? "—";
+        } catch (e) {
+          document.getElementById("metrics").textContent = pretty({ error: "Failed to load /metrics" });
+        }
+      }
+
+      // Auto-refresh toggle
+      document.getElementById("autoMetrics").addEventListener("change", (e) => {
+        if (e.target.checked) {
+          loadMetrics();
+          metricsTimer = setInterval(loadMetrics, 2000);
+        } else {
+          clearInterval(metricsTimer);
+          metricsTimer = null;
+        }
+      });
+
+      // initial load
+      loadMetrics();
+    </script>
+  </body>
+</html>
