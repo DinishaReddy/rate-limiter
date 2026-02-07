@@ -17,5 +17,6 @@ app.include_router(metrics_router)
 # 3) Make "/" return the frontend HTML page
 @app.get("/")
 def home():
-    return {"message": "Server is running ✅"}
+    return FileResponse("app/static/index.html")
+
 
