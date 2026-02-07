@@ -1,2 +1,4 @@
 fastapi
-uvicorn[standard]
+uvicorn
+redis>=5.0.0
+hiredis>=2.0.0
