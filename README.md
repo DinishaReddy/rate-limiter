@@ -1,100 +1,181 @@
-# Rate Limiting Service (FastAPI + Redis)
+🚦 Rate Limiting Service
 
-Production-style rate limiting service with **per-user** and **per-endpoint** enforcement, **4 algorithms**, **metrics**, and a small **web playground UI**.
+Production-style rate limiting system built with FastAPI, Redis, and multiple rate limiting algorithms.
 
-**Live Demo:** https://rate-limiter-wpef.onrender.com/  
+🔗 Live Demo: https://rate-limiter-wpef.onrender.com/
 
+📘 Swagger Docs: https://rate-limiter-wpef.onrender.com/docs
 
----
+📊 Metrics: https://rate-limiter-wpef.onrender.com/metrics
 
-## What this project does
+📌 Overview
 
-This service protects APIs from abuse (spamming, brute-force, traffic spikes) by limiting how many requests a user can make.
+This project protects APIs from abuse such as:
 
-✅ Per-user enforcement via request header: `X-User-Id`  
-✅ Different limits per endpoint (policy-based)  
-✅ Algorithm chosen dynamically (strategy pattern)  
-✅ Redis-backed state + **atomic** updates using Lua scripts  
-✅ Metrics endpoint for observability  
-✅ Deployed on Render (public demo link)
+Brute-force login attempts
 
----
+Traffic spikes
 
-## Algorithms supported
+Automated scraping
 
-- **Fixed Window** — counter resets every time window (simple + fast)
-- **Sliding Window** — counts requests within the last N seconds (fairer)
-- **Token Bucket** — refills tokens over time (allows bursts, controls average)
-- **Leaky Bucket** — leaks at a constant rate (smooth traffic, prevents bursts)
+Request flooding
 
----
+It enforces per-user and per-endpoint limits using configurable policies and multiple rate limiting strategies.
 
-## How it works (high-level)
+✨ Features
 
-Client (UI / Swagger / API call)
+Per-user enforcement (X-User-Id header)
+
+Configurable per-endpoint policies
+
+Multiple rate limiting algorithms:
+
+Fixed Window
+
+Sliding Window
+
+Token Bucket
+
+Leaky Bucket
+
+Redis-backed state management
+
+Atomic operations using Redis Lua scripts
+
+Metrics endpoint
+
+Interactive frontend playground
+
+Deployed publicly on Render
+
+🧠 How It Works
+
+Client (Browser / UI / Swagger)
 ↓
-FastAPI route
+FastAPI Endpoint
 ↓
-Policy lookup (per endpoint)
+Policy Lookup (per endpoint)
 ↓
-LimiterSelector chooses algorithm
+LimiterSelector (Strategy Pattern)
 ↓
-Redis (counters/state, atomic Lua scripts)
+Chosen Rate Limiting Algorithm
+↓
+Redis (State + Atomic Lua Script)
 ↓
 Allow (200) or Block (429)
 ↓
-Metrics updated
+Metrics Updated
+
+⚙️ Algorithms Supported
+Fixed Window
+
+Counter resets every time window.
+Simple and fast.
+
+Sliding Window
+
+Counts requests within the last N seconds.
+More accurate and fair.
+
+Token Bucket
+
+Refills tokens over time.
+Allows bursts while controlling average rate.
+
+Leaky Bucket
+
+Processes requests at a constant rate.
+Prevents burst traffic.
+
+📜 Example Policy Configuration
+/login   → 5 requests / 60s  (sliding_window)
+/data    → 60 requests / 60s (token_bucket)
+/analyze → 10 requests / 60s (leaky_bucket)
 
 
----
+Policies define:
 
-## Quick test (multi-user)
+Maximum requests
 
-Use the UI at:
+Time window
 
-https://rate-limiter-wpef.onrender.com/
+Algorithm to use
 
-1. Set **User ID = alice**, click `/login` repeatedly → eventually gets **429**
-2. Change **User ID = bob** → works again (separate counter)
+🖥 Playground UI
 
----
+The root route / serves a frontend where you can:
 
-## Endpoints
+Enter a custom User ID
 
-- `GET /` → Playground UI  
-- `GET /docs` → Swagger UI  
-- `GET /login`, `GET /data`, `GET /analyze` → demo endpoints with different policies  
-- `GET /metrics` → allowed/blocked counters
+Trigger endpoints
 
----
+See response status
 
-## Run locally
+Watch metrics update live
 
-### 1) Install dependencies
-```bash
+📊 Metrics
+
+The system tracks:
+
+Total allowed requests
+
+Total blocked requests
+
+Example response:
+
+{
+  "allowed_requests": 23,
+  "blocked_requests": 22
+}
+
+🧰 Tech Stack
+
+FastAPI
+
+Redis
+
+Redis Lua Scripts
+
+Uvicorn
+
+Render
+
+Static HTML + JavaScript
+
+🏃 Run Locally
+
+Install dependencies:
+
 pip install -r requirements.txt
-2) Start Redis
-redis-server
-Verify:
 
-redis-cli ping
-# PONG
-3) Start FastAPI
+
+Start Redis:
+
+redis-server
+
+
+Start FastAPI:
+
 uvicorn app.main:app --reload
+
+
 Open:
 
-http://127.0.0.1:8000/ (UI)
+http://127.0.0.1:8000/
+http://127.0.0.1:8000/docs
 
-http://127.0.0.1:8000/docs (Swagger)
+🎯 Why This Project Matters
 
-Tech stack
-FastAPI, Uvicorn
+This project demonstrates:
 
-Redis (state + metrics)
+Backend system design
 
-Redis Lua scripts (atomic algorithm operations)
+Distributed rate limiting
 
-Render (deployment)
+Concurrency-safe architecture
 
-Static HTML/JS (playground UI)
+Cloud deployment
 
+Observability via metrics
+
+Clean modular structure
