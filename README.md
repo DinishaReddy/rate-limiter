@@ -3,8 +3,7 @@
 Production-style rate limiting system built with **FastAPI**, **Redis**, and multiple rate limiting algorithms.
 
 🔗 **Live Demo:** https://rate-limiter-wpef.onrender.com/  
-📘 **Swagger Docs:** https://rate-limiter-wpef.onrender.com/docs  
-📊 **Metrics:** https://rate-limiter-wpef.onrender.com/metrics  
+
 
 ---
 
